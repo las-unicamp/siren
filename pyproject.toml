@@ -1,0 +1,25 @@
+[project]
+name = "siren"
+version = "0.1.0"
+description = "Reconstruct the pressure field using Sinusoidal Representation Network (SIREN)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "configargparse>=1.7",
+    "matplotlib>=3.10.0",
+    "opencv-python>=4.10.0.84",
+    "pillow>=11.0.0",
+    "tensorboard>=2.18.0",
+    "torch>=2.5.1",
+    "torchmetrics>=1.6.0",
+    "tqdm>=4.67.1",
+]
+
+[dependency-groups]
+dev = [
+    "nptyping>=2.5.0",
+    "pre-commit>=4.0.1",
+    "pytest>=8.3.4",
+    "ruff>=0.8.3",
+    "torchtyping>=0.1.5",
+]
