@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 
-from src.hyperparameters import args
 from src.initialization import original_siren_initialization
 
 
@@ -100,10 +99,10 @@ class SIREN(nn.Module):
 
     def __init__(
         self,
-        hidden_features=args.num_nodes_per_layer,
-        hidden_layers=args.num_hidden_layers,
-        first_omega=args.first_layer_omega,
-        hidden_omega=args.hidden_layer_omega,
+        hidden_features,
+        hidden_layers,
+        first_omega,
+        hidden_omega,
         custom_init_function=None,
     ):
         super().__init__()
