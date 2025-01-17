@@ -14,6 +14,7 @@ from src.my_types import (
     TensorFloatNx1,
     TensorFloatNx2,
     TensorFloatNx3,
+    TensorScalar,
 )
 
 
@@ -32,8 +33,6 @@ class TrainingData(TypedDict):
 
 
 class RunnerReturnItems(TypedDict):
-    epoch_loss: float
-    epoch_psnr: float
-    predictions: TensorFloatN
-    derivatives: TensorFloatNx1 | TensorFloatNx2 | TensorFloatNx3
-    mask: TensorFloatN
+    epoch_loss: TensorScalar
+    epoch_psnr: TensorScalar
+    epoch_mae: TensorScalar
