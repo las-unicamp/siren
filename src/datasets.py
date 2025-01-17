@@ -8,10 +8,12 @@ from src.dtos import DatasetReturnItems, TrainingData
 from src.my_types import (
     ArrayBoolNxN,
     ArrayFloat32Nx2,
+    ArrayFloat32Nx3,
     ArrayFloat32NxN,
     TensorBoolN,
     TensorFloatNx1,
     TensorFloatNx2,
+    TensorFloatNx3,
 )
 
 
@@ -115,9 +117,9 @@ class DerivativesPixelDatasetBatches(DerivativesPixelDataset):
 
 
 def process_coordinates(
-    coordinates: ArrayFloat32Nx2,
+    coordinates: ArrayFloat32Nx2 | ArrayFloat32Nx3,
     device: torch.device,
-) -> TensorFloatNx2:
+) -> TensorFloatNx2 | TensorFloatNx3:
     """Processes and converts coordinates to a PyTorch tensor."""
     return torch.from_numpy(coordinates).to(device=device, dtype=torch.float)
 
@@ -142,7 +144,7 @@ def process_laplacian(
 def process_gradients(
     gradients: List[ArrayFloat32NxN],
     device: torch.device,
-) -> TensorFloatNx2:
+) -> TensorFloatNx2 | TensorFloatNx3:
     """Processes gradients into a PyTorch tensor."""
     grads = np.stack([gradients[0], gradients[1]], axis=-1)
     # grads = np.stack([gradients[0], gradients[1], gradients[2]], axis=-1)

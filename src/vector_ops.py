@@ -1,9 +1,11 @@
 import torch
 
-from src.my_types import TensorFloatN, TensorFloatNx1, TensorFloatNx2
+from src.my_types import TensorFloatN, TensorFloatNx1, TensorFloatNx2, TensorFloatNx3
 
 
-def gradient(target: TensorFloatN, coords: TensorFloatNx2) -> TensorFloatNx2:
+def gradient(
+    target: TensorFloatN, coords: TensorFloatNx2 | TensorFloatNx3
+) -> TensorFloatNx2:
     """Compute the gradient with respect to input.
 
     Parameters
@@ -25,7 +27,9 @@ def gradient(target: TensorFloatN, coords: TensorFloatNx2) -> TensorFloatNx2:
     return grad
 
 
-def divergence(grad: TensorFloatNx2, coords: TensorFloatNx2) -> TensorFloatNx1:
+def divergence(
+    grad: TensorFloatNx2, coords: TensorFloatNx2 | TensorFloatNx3
+) -> TensorFloatNx1:
     """Compute divergence.
 
     Parameters
@@ -54,7 +58,9 @@ def divergence(grad: TensorFloatNx2, coords: TensorFloatNx2) -> TensorFloatNx1:
     return div
 
 
-def laplace(target: TensorFloatNx1, coords: TensorFloatNx2) -> TensorFloatNx1:
+def laplace(
+    target: TensorFloatNx1, coords: TensorFloatNx2 | TensorFloatNx3
+) -> TensorFloatNx1:
     """Compute laplace operator.
 
     Parameters
