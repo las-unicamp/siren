@@ -17,7 +17,7 @@ from src.my_types import (
 )
 
 
-class DerivativesPixelDataset(Dataset):
+class DerivativesDataset(Dataset):
     """Dataset yielding coordinates, derivatives and the (integrated) image.
 
     Parameters
@@ -31,10 +31,10 @@ class DerivativesPixelDataset(Dataset):
 
     Attributes
     ----------
-    coordinates : TensorFloatNx2
-        Normalized coordinates of the dataset.
+    coordinates : TensorFloatNx2 or TensorFloatNx3
+        Coordinates of the dataset.
 
-    derivatives : TensorFloatNx1 or TensorFloatNx2
+    derivatives : TensorFloatNx1, TensorFloatNx2 or TensorFloatNx3
         Laplacian or gradient derivatives.
 
     mask : TensorBoolN
@@ -56,14 +56,27 @@ class DerivativesPixelDataset(Dataset):
             )
 
         elif has_gradients(training_data):
-            self.derivatives = process_gradients(
-                gradients=[
-                    training_data["gradient_x"],
-                    training_data["gradient_y"],
-                    # training_data["gradient_z"],
-                ],
-                device=device,
-            )
+            gradients = [
+                training_data["gradient_x"],
+                training_data["gradient_y"],
+                training_data.get("gradient_z", None),  # Optional z-gradient
+            ]
+
+            # Check that the number of gradients matches the coordinates' dimensionality
+            coordinates = training_data["coordinates"]
+            if coordinates.shape[1] == 3:  # 3D coordinates
+                if gradients[2] is None:
+                    raise ValueError(
+                        "For 3D coordinates, the z-gradient ('gradient_z') is required."
+                    )
+            elif coordinates.shape[1] == 2:  # 2D coordinates
+                if gradients[2] is not None:
+                    raise ValueError(
+                        "For 2D coordinates, the z-gradient ('gradient_z') "
+                        "should not be provided."
+                    )
+
+            self.derivatives = process_gradients(gradients=gradients, device=device)
         else:
             raise ReferenceError(
                 "Derivative data is missing. "
@@ -71,10 +84,19 @@ class DerivativesPixelDataset(Dataset):
                 "'gradient_x' and 'gradient_y'."
             )
 
-        # Process coordinates and mask
+        # Process coordinates
         self.coordinates = process_coordinates(
             training_data["coordinates"], device=device
         )
+
+        # Verify the shape of coordinates (2D or 3D)
+        if self.coordinates.size(1) not in [2, 3]:
+            raise ValueError(
+                f"Coordinates must have shape (N, 2) or (N, 3), "
+                f"but got {self.coordinates.shape}."
+            )
+
+        # Process mask
         self.mask = process_mask(training_data["mask"])
 
         # Apply the mask to coordinates and derivatives
@@ -99,7 +121,7 @@ class DerivativesPixelDataset(Dataset):
         )
 
 
-class DerivativesPixelDatasetBatches(DerivativesPixelDataset):
+class DerivativesDatasetBatches(DerivativesDataset):
     """Dataset extending the parent class to allow batch training."""
 
     def __len__(self):
@@ -145,16 +167,27 @@ def process_gradients(
     gradients: List[ArrayFloat32NxN],
     device: torch.device,
 ) -> TensorFloatNx2 | TensorFloatNx3:
-    """Processes gradients into a PyTorch tensor."""
-    grads = np.stack([gradients[0], gradients[1]], axis=-1)
-    # grads = np.stack([gradients[0], gradients[1], gradients[2]], axis=-1)
-    grads = (
-        torch.from_numpy(grads)
-        .to(device=device, dtype=torch.float)
-        .contiguous()
-        .view(-1, 2)
-        # .view(-1, 3)
-    )
+    """Processes gradients into a PyTorch tensor, considering missing gradients."""
+
+    # Filter out None values from the gradients list
+    valid_gradients = [grad for grad in gradients if grad is not None]
+
+    # Ensure that we have either 2 or 3 gradients
+    if len(valid_gradients) not in [2, 3]:
+        raise ValueError(f"Expected 2 or 3 gradients, but got {len(valid_gradients)}.")
+
+    # Stack the valid gradients along the last dimension
+    grads = np.stack(valid_gradients, axis=-1)
+
+    # Convert to PyTorch tensor and move to the correct device
+    grads = torch.from_numpy(grads).to(device=device, dtype=torch.float).contiguous()
+
+    # Return the reshaped tensor based on the number of gradients
+    if grads.shape[-1] == 2:
+        grads = grads.view(-1, 2)
+    elif grads.shape[-1] == 3:
+        grads = grads.view(-1, 3)
+
     return grads
 
 
