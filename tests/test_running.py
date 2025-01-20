@@ -81,9 +81,6 @@ class TestRunner(unittest.TestCase):
             "coordinates", self.mock_data["coords"]
         )
 
-        # Check if "mask" is being tracked correctly
-        self.mock_tracker.add_batch_data.assert_any_call("mask", self.mock_data["mask"])
-
         # Generate the actual predictions from the model
         predictions_tensor = self.runner.strategy.forward_batch(
             self.runner.model, self.mock_data["coords"]

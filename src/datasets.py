@@ -117,7 +117,6 @@ class DerivativesDataset(Dataset):
         return DatasetReturnItems(
             coords=self.coordinates.requires_grad_(True),
             derivatives=self.derivatives,
-            mask=self.mask,
         )
 
 
@@ -134,7 +133,6 @@ class DerivativesDatasetBatches(DerivativesDataset):
         return DatasetReturnItems(
             coords=self.coordinates[idx].requires_grad_(True),
             derivatives=self.derivatives[idx],
-            mask=self.mask[idx],
         )
 
 

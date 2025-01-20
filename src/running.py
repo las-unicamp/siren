@@ -144,7 +144,6 @@ class Runner:
             if tracker.should_save_intermediary_data():
                 tracker.add_batch_data("coordinates", inputs)
                 tracker.add_batch_data("predictions", predictions)
-                tracker.add_batch_data("mask", data["mask"])
                 tracker.add_batch_data("fitted_derivatives", derivatives)
 
             epoch_loss += loss.item()

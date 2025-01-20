@@ -9,7 +9,6 @@ from src.my_types import (
     ArrayFloat32Nx2,
     ArrayFloat32Nx3,
     ArrayFloat32NxN,
-    TensorBoolN,
     TensorFloatN,
     TensorFloatNx1,
     TensorFloatNx2,
@@ -21,7 +20,6 @@ from src.my_types import (
 class DatasetReturnItems(TypedDict):
     coords: TensorFloatN
     derivatives: TensorFloatNx1 | TensorFloatNx2 | TensorFloatNx3
-    mask: TensorBoolN
 
 
 class TrainingData(TypedDict):
