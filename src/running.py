@@ -129,8 +129,8 @@ class Runner:
         for batch_index, data in enumerate(self.loader):
             data: DatasetReturnItems
 
-            inputs = data["coords"]
-            targets = data["derivatives"]
+            inputs = data["coords"].squeeze()
+            targets = data["derivatives"].squeeze()
 
             predictions = self.strategy.forward_batch(self.model, inputs)
             loss, derivatives = self.loss_fn(predictions, targets, inputs)
