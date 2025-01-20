@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Generator
 from unittest.mock import MagicMock
 
 import pytest
@@ -53,9 +54,16 @@ def mock_optimizer(mock_model: Module) -> Optimizer:
 
 # Checkpoint file fixture
 @pytest.fixture
-def checkpoint_filename() -> str:
-    """Fixture to return a temporary checkpoint filename."""
-    return "test_checkpoint.pth.tar"
+def checkpoint_filename() -> Generator[str, None, None]:
+    """Fixture to return a temporary checkpoint filename with teardown."""
+    filename = "test_checkpoint.pth.tar"
+
+    yield filename  # Provide the filename to the test
+
+    # Teardown: Delete the file after the test
+    checkpoint_path = Path(filename)
+    if checkpoint_path.exists():
+        checkpoint_path.unlink()  # Remove the file
 
 
 # Test saving checkpoint
@@ -66,7 +74,6 @@ def test_save_checkpoint(
     epoch = 10
     prev_lr = 1e-4
     loss = 0.25
-    rre = 0.1
 
     save_checkpoint(
         mock_model,
@@ -74,7 +81,6 @@ def test_save_checkpoint(
         epoch,
         prev_lr,
         loss,
-        rre,
         filename=checkpoint_filename,
     )
 
@@ -88,7 +94,6 @@ def test_save_checkpoint(
     assert checkpoint["epoch"] == epoch
     assert checkpoint["prev_lr"] == prev_lr
     assert checkpoint["loss"] == loss
-    assert checkpoint["relative_residual_error"] == rre
 
 
 # Test loading checkpoint
@@ -99,7 +104,6 @@ def test_load_checkpoint(
     epoch = 10
     prev_lr = 1e-4
     loss = 0.25
-    rre = 0.1
 
     # Save a checkpoint first
     save_checkpoint(
@@ -108,12 +112,11 @@ def test_load_checkpoint(
         epoch,
         prev_lr,
         loss,
-        rre,
         filename=checkpoint_filename,
     )
 
     # Now test loading the checkpoint
-    loaded_epoch, loaded_prev_lr, loaded_loss, loaded_rre = load_checkpoint(
+    loaded_epoch, loaded_prev_lr, loaded_loss = load_checkpoint(
         device="cpu",
         model=mock_model,
         filename=checkpoint_filename,
@@ -124,7 +127,6 @@ def test_load_checkpoint(
     assert loaded_epoch == epoch
     assert loaded_prev_lr == prev_lr
     assert loaded_loss == loss
-    assert loaded_rre == rre
 
 
 # Test loading checkpoint with default values
@@ -143,12 +145,11 @@ def test_load_checkpoint_with_default_values(
         epoch,
         prev_lr,
         loss,
-        rre=None,
         filename=checkpoint_filename,
     )
 
     # Load checkpoint and check defaults
-    loaded_epoch, loaded_prev_lr, loaded_loss, loaded_rre = load_checkpoint(
+    loaded_epoch, loaded_prev_lr, loaded_loss = load_checkpoint(
         device="cpu",
         model=mock_model,
         filename=checkpoint_filename,
@@ -158,4 +159,3 @@ def test_load_checkpoint_with_default_values(
     assert loaded_epoch == epoch
     assert loaded_prev_lr == prev_lr
     assert loaded_loss == loss
-    assert loaded_rre is None

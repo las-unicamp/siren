@@ -10,7 +10,6 @@ def save_checkpoint(
     epoch: int,
     prev_lr: float,
     loss: float,
-    rre: float,
     filename: str,
 ):
     print("=> Saving checkpoint")
@@ -21,7 +20,6 @@ def save_checkpoint(
         "prev_lr": prev_lr,
         "epoch": epoch,
         "loss": loss,
-        "relative_residual_error": rre,
     }
 
     torch.save(state, filename)
@@ -44,6 +42,5 @@ def load_checkpoint(
     prev_lr = checkpoint.get("prev_lr", 3e-05)
     epoch = checkpoint["epoch"]
     loss = checkpoint["loss"]
-    rre = checkpoint.get("relative_residual_error", checkpoint.get("best_acc"))
 
-    return epoch, prev_lr, loss, rre
+    return epoch, prev_lr, loss
