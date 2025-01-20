@@ -128,6 +128,10 @@ def main():
             print("Ealy stopping")
             break
 
+        if tracker.should_save_intermediary_data():
+            if is_iteration_to_save_data(runner.epoch):
+                tracker.save_epoch_data("data_epoch", runner.epoch)
+
         # Flush tracker after every epoch for live updates
         tracker.flush()
 
@@ -143,10 +147,6 @@ def main():
                 filename,
             )
             print(f"Best psnr: {epoch_psnr} \t \t Best loss: {epoch_loss}")
-
-        if tracker.should_save_intermediary_data():
-            if is_iteration_to_save_data(runner.epoch):
-                tracker.save_epoch_data("data_epoch", runner.epoch)
 
         progress_bar.update(1)
         progress_bar.set_postfix(
