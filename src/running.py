@@ -174,7 +174,7 @@ def run_epoch(
     tracker.add_epoch_metric("mae", results["epoch_mae"], runner.epoch)
 
     if should_save_data:
-        tracker.save_epoch_data(f"data_epoch{runner.epoch}", results)
+        tracker.save_epoch_data("data_epoch", runner.epoch)
 
     return (
         results["epoch_loss"],

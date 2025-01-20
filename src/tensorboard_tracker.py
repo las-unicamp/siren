@@ -65,4 +65,10 @@ class TensorboardTracker:
         mat_filename = f"{name}_{step}.mat"
         mat_filepath = os.path.join(self.directory, mat_filename)
         batch_data = self.get_batch_data()
-        savemat(mat_filepath, batch_data)
+        batch_data_cpu = {
+            key: value.detach().cpu().numpy()
+            if isinstance(value, torch.Tensor)
+            else value
+            for key, value in batch_data.items()
+        }
+        savemat(mat_filepath, batch_data_cpu)

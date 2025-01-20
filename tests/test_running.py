@@ -67,12 +67,7 @@ class TestRunner(unittest.TestCase):
 
         # Verify if the save_epoch_data method was called when should_save_data is True
         self.mock_tracker.save_epoch_data.assert_called_once_with(
-            f"data_epoch{self.runner.epoch}",
-            {
-                "epoch_loss": epoch_loss,
-                "epoch_psnr": epoch_psnr,
-                "epoch_mae": epoch_mae,
-            },
+            "data_epoch", self.runner.epoch
         )
 
     def test_batch_data_tracking(self):
