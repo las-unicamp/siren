@@ -59,7 +59,12 @@ def main():
         drop_last=False,
     )
 
-    model = SIREN()
+    model = SIREN(
+        hidden_features=args.num_nodes_per_layer,
+        hidden_layers=args.num_hidden_layers,
+        first_omega=args.first_layer_omega,
+        hidden_omega=args.hidden_layer_omega,
+    )
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
