@@ -50,10 +50,21 @@ class TestDatasetProcessingFunctions(unittest.TestCase):
         self.assertEqual(coords_tensor.shape, (100, 3))
 
     def test_process_mask(self):
-        """Test processing of mask."""
+        """Test processing of mask (boolean type)."""
         mask_tensor = process_mask(self.mask)
         self.assertIsInstance(mask_tensor, torch.Tensor)
         self.assertEqual(mask_tensor.shape, (100,))
+        self.assertTrue(mask_tensor.dtype == torch.bool)
+
+    def test_process_mask_uint(self):
+        """Test processing of mask (uint8 type), should convert to boolean."""
+        mask_uint = np.random.randint(0, 2, (10, 10)).astype(np.uint8)
+        mask_tensor = process_mask(mask_uint)
+        self.assertIsInstance(mask_tensor, torch.Tensor)
+        self.assertEqual(mask_tensor.shape, (100,))
+        self.assertTrue(mask_tensor.dtype == torch.bool)
+        # Ensure it only contains 0s and 1s:
+        self.assertTrue((mask_tensor == mask_tensor.int()).all())
 
     def test_process_laplacian(self):
         """Test processing of Laplacian."""

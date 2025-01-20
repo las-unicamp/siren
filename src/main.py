@@ -45,10 +45,10 @@ def main():
 
     if args.batch_size > 1:
         print("Running with multiple batches")
-        dataset = DerivativesDatasetBatches(images=training_data, device=device)
+        dataset = DerivativesDatasetBatches(training_data=training_data, device=device)
     else:
         print("Running with single batch")
-        dataset = DerivativesDataset(images=training_data, device=device)
+        dataset = DerivativesDataset(training_data=training_data, device=device)
 
     dataloader = DataLoader(
         dataset,

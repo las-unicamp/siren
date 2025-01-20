@@ -148,6 +148,9 @@ def process_coordinates(
 
 def process_mask(mask: ArrayBoolNxN) -> TensorBoolN:
     """Flattens and converts the mask to a PyTorch tensor."""
+    if mask.dtype in [np.uint8, np.uint16, np.uint32, np.uint64]:
+        mask = mask.astype(bool)
+
     mask = mask.ravel()
     return torch.from_numpy(mask)
 
