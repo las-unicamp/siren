@@ -33,11 +33,12 @@ class MyProgramArgs:
     num_epochs: int
     batch_size: int
     num_workers: int
+    use_autocast: bool
 
     # checkpoint parameters
     epochs_until_checkpoint: int
     load_checkpoint: str
-    checkpoint_file_name: str
+    checkpoint_file_name_on_save: str
 
 
 parser = configargparse.ArgumentParser()
@@ -141,6 +142,12 @@ parser.add_argument(
 parser.add_argument(
     "--num_workers", type=int, default=0, help="Number of workers. default=0"
 )
+parser.add_argument(
+    "--use_autocast",
+    type=bool,
+    default=False,
+    help="Use mixed precision training. default=False",
+)
 
 
 # checkpoint parameters
@@ -158,11 +165,10 @@ parser.add_argument(
     "or make inference. default=None",
 )
 parser.add_argument(
-    "--checkpoint_file_name",
+    "--checkpoint_file_name_on_save",
     type=str,
     default="my_checkpoint.pth.tar",
-    help="Name of checkpoint file to continue training or make inference."
-    "default=my_checkpoint.pth.tar",
+    help="Name of checkpoint file to be saved. default=my_checkpoint.pth.tar",
 )
 
 
