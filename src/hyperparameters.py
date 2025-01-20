@@ -16,7 +16,7 @@ class MyProgramArgs:
     logging_root: str
     experiment_name: str
     epochs_until_summary: int
-    frequency_save_intermediary_outputs: int
+    save_intermediary_outputs: int
 
     # input parameters
     fit: str
@@ -71,11 +71,10 @@ parser.add_argument(
     help="Number of epochs until tensorboard summary is saved. default=1,000",
 )
 parser.add_argument(
-    "--frequency_save_intermediary_outputs",
-    type=int,
-    default=None,
-    help="Frequency (num epochs) to save intermediary results."
-    "default=None (nothing is saved)",
+    "--save_intermediary_outputs",
+    type=bool,
+    default=True,
+    help="If intermediary results should be saved. default=True",
 )
 
 
@@ -162,7 +161,7 @@ parser.add_argument(
     type=str,
     default=None,
     help="Name of the checkpoint file to continue training from a given point"
-    "or make inference. default=None",
+    "or make inference. default=None (fresh start)",
 )
 parser.add_argument(
     "--checkpoint_file_name_on_save",

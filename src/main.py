@@ -112,7 +112,7 @@ def main():
         epoch_loss, epoch_psnr, epoch_mae = run_epoch(
             runner=runner,
             tracker=tracker,
-            should_save_data=True,
+            should_save_data=args.save_intermediary_outputs,
         )
 
         scheduler.step(epoch_loss)
