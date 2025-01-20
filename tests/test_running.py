@@ -50,9 +50,7 @@ class TestRunner(unittest.TestCase):
 
     def test_run_epoch(self):
         # Simulate running an epoch and check the results
-        epoch_loss, epoch_psnr, epoch_mae = run_epoch(
-            self.runner, self.mock_tracker, should_save_data=True
-        )
+        epoch_loss, epoch_psnr, epoch_mae = run_epoch(self.runner, self.mock_tracker)
 
         # Check if the correct epoch metrics were added
         self.mock_tracker.add_epoch_metric.assert_any_call(
@@ -63,11 +61,6 @@ class TestRunner(unittest.TestCase):
         )
         self.mock_tracker.add_epoch_metric.assert_any_call(
             "mae", epoch_mae, self.runner.epoch
-        )
-
-        # Verify if the save_epoch_data method was called when should_save_data is True
-        self.mock_tracker.save_epoch_data.assert_called_once_with(
-            "data_epoch", self.runner.epoch
         )
 
     def test_batch_data_tracking(self):
@@ -155,15 +148,6 @@ class TestRunner(unittest.TestCase):
         self.assertEqual(
             results["epoch_mae"].dtype, torch.float, "MAE should have dtype torch.float"
         )
-
-    def test_run_no_save(self):
-        # Run epoch without saving data
-        epoch_loss, epoch_psnr, epoch_mae = run_epoch(
-            self.runner, self.mock_tracker, should_save_data=False
-        )
-
-        # Ensure save_epoch_data was not called
-        self.mock_tracker.save_epoch_data.assert_not_called()
 
     def test_invalid_strategy(self):
         # Try to initialize with an invalid strategy

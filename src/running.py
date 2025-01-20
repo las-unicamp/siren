@@ -141,10 +141,11 @@ class Runner:
             self.psnr_metric.forward(targets, derivatives)
             self.mae_metric.forward(targets, derivatives)
 
-            tracker.add_batch_data("coordinates", inputs)
-            tracker.add_batch_data("predictions", predictions)
-            tracker.add_batch_data("mask", data["mask"])
-            tracker.add_batch_data("fitted_derivatives", derivatives)
+            if tracker.should_save_intermediary_data():
+                tracker.add_batch_data("coordinates", inputs)
+                tracker.add_batch_data("predictions", predictions)
+                tracker.add_batch_data("mask", data["mask"])
+                tracker.add_batch_data("fitted_derivatives", derivatives)
 
             epoch_loss += loss.item()
 
@@ -164,17 +165,12 @@ class Runner:
         )
 
 
-def run_epoch(
-    runner: Runner, tracker: NetworkTracker, should_save_data=False
-) -> Tuple[float, float, float]:
+def run_epoch(runner: Runner, tracker: NetworkTracker) -> Tuple[float, float, float]:
     results = runner.run(tracker)
 
     tracker.add_epoch_metric("loss", results["epoch_loss"], runner.epoch)
     tracker.add_epoch_metric("psnr", results["epoch_psnr"], runner.epoch)
     tracker.add_epoch_metric("mae", results["epoch_mae"], runner.epoch)
-
-    if should_save_data:
-        tracker.save_epoch_data("data_epoch", runner.epoch)
 
     return (
         results["epoch_loss"],

@@ -11,7 +11,13 @@ from src.my_types import TensorFloatN, TensorFloatNx2, TensorFloatNx3
 
 
 class TensorboardTracker:
-    def __init__(self, log_dir: str, dirname: str = "", create: bool = True):
+    def __init__(
+        self,
+        log_dir: str,
+        dirname: str = "",
+        create: bool = True,
+        save_intermediary_data: bool = True,
+    ):
         default_name = time.strftime("run_%Y_%m_%d-%H_%M_%S")
         dirname = dirname if dirname else default_name
 
@@ -21,6 +27,8 @@ class TensorboardTracker:
         self._writer = SummaryWriter(self.directory)
 
         self._batch_data = {}
+
+        self._save_intermediary_data = save_intermediary_data
 
     @staticmethod
     def _validate_log_dir(log_dir: str, create: bool = True):
@@ -36,6 +44,9 @@ class TensorboardTracker:
         self._writer.flush()
 
         self._batch_data = {}
+
+    def should_save_intermediary_data(self) -> bool:
+        return self._save_intermediary_data
 
     def add_batch_data(
         self, key: str, data: TensorFloatN | TensorFloatNx2 | TensorFloatNx3

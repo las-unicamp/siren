@@ -15,6 +15,12 @@ class NetworkTracker(Protocol):
     def add_epoch_metric(self, name: str, value: float, step: int):
         """Implements logging an epoch-level metric"""
 
+    def should_save_intermediary_data(self) -> bool:
+        """
+        Returns whether intermediary data should be saved.
+        The class should track this status internally.
+        """
+
     def get_batch_data(
         self,
     ) -> Dict[str, TensorFloatN | TensorFloatNx2 | TensorFloatNx3]:

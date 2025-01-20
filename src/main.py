@@ -114,11 +114,7 @@ def main():
     for epoch in range(runner.epoch, args.num_epochs):
         progress_bar.set_description(f"Epoch {epoch + 1}/{args.num_epochs}")
 
-        epoch_loss, epoch_psnr, epoch_mae = run_epoch(
-            runner=runner,
-            tracker=tracker,
-            should_save_data=args.save_intermediary_outputs,
-        )
+        epoch_loss, epoch_psnr, epoch_mae = run_epoch(runner=runner, tracker=tracker)
 
         scheduler.step(epoch_loss)
 
@@ -148,6 +144,10 @@ def main():
             )
             print(f"Best psnr: {epoch_psnr} \t \t Best loss: {epoch_loss}")
 
+        if tracker.should_save_intermediary_data():
+            if is_iteration_to_save_data(runner.epoch):
+                tracker.save_epoch_data("data_epoch", runner.epoch)
+
         progress_bar.update(1)
         progress_bar.set_postfix(
             loss=f"{epoch_loss:.5f}",
@@ -162,6 +162,10 @@ def should_save_model(epoch: int, lowest_err: float, actual_err: float) -> bool:
     if (epoch % args.epochs_until_checkpoint == 0) and (lowest_err > actual_err):
         return True
     return False
+
+
+def is_iteration_to_save_data(epoch: int):
+    return epoch % args.epochs_until_checkpoint == 0
 
 
 if __name__ == "__main__":

@@ -23,6 +23,18 @@ class TestTensorboardTracker(unittest.TestCase):
         self.assertTrue(Path(self.test_log_dir).exists())
         self.assertTrue(Path(self.tracker.directory).exists())
 
+    def test_should_save_intermediary_data(self):
+        # Test that the stored value is correctly returned
+        self.assertTrue(
+            self.tracker.should_save_intermediary_data()
+        )  # Check if True was stored
+
+        # Initialize with False and check
+        tracker_false = TensorboardTracker(
+            log_dir=self.test_log_dir, save_intermediary_data=False
+        )
+        self.assertFalse(tracker_false.should_save_intermediary_data())
+
     def test_add_batch_data(self):
         coords = torch.tensor([[0.1, 0.2], [0.3, 0.4]])
         data = torch.tensor([0.9, 0.8])
