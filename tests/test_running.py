@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 import unittest
 from unittest.mock import MagicMock
 
@@ -74,36 +76,34 @@ class TestRunner(unittest.TestCase):
         self.runner.model.load_state_dict(initial_state_dict)
 
         # Check if the batch data tracking functions are called correctly
-        # Mock will run a shallow equality check for the coordinates argument, so this
-        # approach will work: Mock will certify that the method was called with the
-        # correct argument.
-        self.mock_tracker.add_batch_data.assert_any_call(
-            "coordinates", self.mock_data["coords"]
+        # Instead of using assert_any_call, manually extract the call args
+        call_found = False
+        for call in self.mock_tracker.add_batch_data.call_args_list:
+            if call[0][0] == "coordinates" and torch.allclose(
+                call[0][1], self.mock_data["coords"], atol=1e-6
+            ):
+                call_found = True
+                break
+
+        self.assertTrue(
+            call_found,
+            "add_batch_data was not called with 'coordinates' and matching data.",
         )
 
-        # Generate the actual predictions from the model
+        # Now compare predictions as before
         predictions_tensor = self.runner.precision_strategy.forward_batch(
             self.runner.model, self.mock_data["coords"]
         )
 
-        # When dealing with the predictions, predictions_tensor is computed after the
-        # run method executes, so it is NOT the same object in memory. Hence, the
-        # approach we used for the coordinates won't work... Instead, we verify if
-        # the method was called, and then we verify if the values for prediction
-        # are close enough.. so it is gonna be 2 checks in this case
-
         # Extract the "predictions" call arguments
+        call_found = False
         for call in self.mock_tracker.add_batch_data.call_args_list:
-            if call[0][0] == "predictions":  # Check the first argument ("predictions")
+            if call[0][0] == "predictions":
                 tracked_predictions = call[0][1]  # Second argument (tensor)
+                call_found = True
                 break
         else:
             self.fail("add_batch_data was not called with 'predictions'.")
-
-        print(f"Tracked Predictions: {tracked_predictions}")
-        print(f"Generated Predictions: {predictions_tensor}")
-        diff = tracked_predictions - predictions_tensor
-        print(f"Difference: {diff}")
 
         # Compare the predicted tensors explicitly
         self.assertTrue(
