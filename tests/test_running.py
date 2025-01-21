@@ -39,7 +39,7 @@ class TestRunner(unittest.TestCase):
             fit_option="gradients",
             optimizer=self.optimizer,
             device=torch.device("cpu"),
-            strategy=StandardPrecisionStrategy(),  # You can choose any strategy
+            precision_strategy=StandardPrecisionStrategy(),  # Choose any strategy
         )
 
         # Metrics setup
@@ -82,7 +82,7 @@ class TestRunner(unittest.TestCase):
         )
 
         # Generate the actual predictions from the model
-        predictions_tensor = self.runner.strategy.forward_batch(
+        predictions_tensor = self.runner.precision_strategy.forward_batch(
             self.runner.model, self.mock_data["coords"]
         )
 
@@ -152,7 +152,7 @@ class TestRunner(unittest.TestCase):
             fit_option="gradients",
             optimizer=self.optimizer,
             device=torch.device("cpu"),
-            strategy=None,  # Invalid strategy
+            precision_strategy=None,  # Invalid strategy
         )
         with self.assertRaises(TypeError):
             Runner(self.mock_loader, self.model, invalid_config, TrainingMetrics())

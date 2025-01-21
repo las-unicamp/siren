@@ -14,7 +14,7 @@ from src.my_types import TensorFloatN, TensorFloatNx2, TensorFloatNx3
 from src.tracking import NetworkTracker
 
 
-class BatchTrainingStrategy(Protocol):
+class TrainingPrecisionStrategy(Protocol):
     def forward_batch(
         self, model: torch.nn.Module, inputs: TensorFloatNx2 | TensorFloatNx3
     ) -> TensorFloatN:
@@ -72,7 +72,7 @@ class TrainingConfig(TypedDict):
     fit_option: Literal["gradients, laplacian"]
     optimizer: torch.optim.Optimizer
     device: torch.device
-    strategy: BatchTrainingStrategy
+    precision_strategy: TrainingPrecisionStrategy
 
 
 @dataclass
@@ -99,7 +99,7 @@ class Runner:
         is_laplacian = config["fit_option"] == "laplacian"
         self.loss_fn = FitLaplacian() if is_laplacian else FitGradients()
         self.device = config["device"]
-        self.strategy = config["strategy"]
+        self.precision_strategy = config["precision_strategy"]
 
         # Send to device
         self.model = self.model.to(device=self.device)
@@ -111,12 +111,13 @@ class Runner:
     def _validate_config(config: TrainingConfig):
         """Validates the provided training configuration."""
         if not isinstance(
-            config["strategy"], (MixedPrecisionStrategy, StandardPrecisionStrategy)
+            config["precision_strategy"],
+            (MixedPrecisionStrategy, StandardPrecisionStrategy),
         ):
             raise TypeError(
                 f"Invalid strategy type. "
                 f"Expected MixedPrecisionStrategy or StandardPrecisionStrategy, "
-                f"but got {type(config['strategy']).__name__}."
+                f"but got {type(config['precision_strategy']).__name__}."
             )
 
     def run(self, tracker: NetworkTracker) -> RunnerReturnItems:
@@ -132,11 +133,11 @@ class Runner:
             inputs = data["coords"].squeeze()
             targets = data["derivatives"].squeeze()
 
-            predictions = self.strategy.forward_batch(self.model, inputs)
+            predictions = self.precision_strategy.forward_batch(self.model, inputs)
             loss, derivatives = self.loss_fn(predictions, targets, inputs)
 
             self.optimizer.zero_grad()
-            self.strategy.backward_batch(loss, self.optimizer)
+            self.precision_strategy.backward_batch(loss, self.optimizer)
 
             self.psnr_metric.forward(targets, derivatives)
             self.mae_metric.forward(targets, derivatives)

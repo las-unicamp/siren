@@ -74,16 +74,16 @@ def main():
     )
 
     if args.use_autocast:
-        strategy = MixedPrecisionStrategy()
+        precision_strategy = MixedPrecisionStrategy()
     else:
-        strategy = StandardPrecisionStrategy()
+        precision_strategy = StandardPrecisionStrategy()
 
     config: TrainingConfig
     config = {
         "device": device,
         "fit_option": args.fit,
         "optimizer": optimizer,
-        "strategy": strategy,
+        "precision_strategy": precision_strategy,
     }
 
     runner = Runner(dataloader, model, config, TrainingMetrics())
