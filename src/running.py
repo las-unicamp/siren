@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Protocol, Tuple, TypedDict
+from typing import Any, Tuple, TypedDict
 
 import torch
 from torch.utils.data.dataloader import DataLoader
@@ -9,68 +9,12 @@ from torchmetrics.image import PeakSignalNoiseRatio
 from src.datasets import DatasetReturnItems
 from src.dtos import RunnerReturnItems
 from src.metrics import RelativeResidualError
-from src.my_types import TensorFloatN, TensorFloatNx2, TensorFloatNx3
 from src.tracking import NetworkTracker
-
-
-class TrainingPrecisionStrategy(Protocol):
-    def forward_batch(
-        self, model: torch.nn.Module, inputs: TensorFloatNx2 | TensorFloatNx3
-    ) -> TensorFloatN:
-        """Implements forward pass for a batch"""
-
-    def backward_batch(
-        self, loss: torch.Tensor, optimizer: torch.optim.Optimizer
-    ) -> None:
-        """Implements backward pass for a batch"""
-
-
-class MixedPrecisionStrategy:
-    def __init__(self, dtype=torch.float16):
-        self.scaler = torch.amp.GradScaler()
-        self.dtype = dtype  # Default to float16 for mixed precision
-
-    def forward_batch(
-        self, model: torch.nn.Module, inputs: TensorFloatNx2 | TensorFloatNx3
-    ) -> TensorFloatN:
-        device = next(model.parameters()).device
-        device_type = "cuda" if device.type == "cuda" else "cpu"
-
-        with torch.autocast(
-            device_type=device_type,
-            dtype=self.dtype,
-            cache_enabled=True,
-            enabled=True,
-        ):
-            predictions = model(inputs)
-        return predictions
-
-    def backward_batch(
-        self, loss: torch.Tensor, optimizer: torch.optim.Optimizer
-    ) -> None:
-        self.scaler.scale(loss).backward()
-        self.scaler.step(optimizer)
-        self.scaler.update()
-
-
-class StandardPrecisionStrategy:
-    def forward_batch(
-        self, model: torch.nn.Module, inputs: TensorFloatNx2 | TensorFloatNx3
-    ) -> TensorFloatN:
-        return model(inputs)
-
-    def backward_batch(
-        self, loss: torch.Tensor, optimizer: torch.optim.Optimizer
-    ) -> None:
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
 
 
 class TrainingConfig(TypedDict):
     optimizer: torch.optim.Optimizer
     device: torch.device
-    precision_strategy: TrainingPrecisionStrategy
     loss_fn: torch.nn.Module
 
 
@@ -89,34 +33,18 @@ class Runner:
         config: TrainingConfig,
         metrics: TrainingMetrics,
     ):
-        self._validate_config(config)
-
         self.epoch = 0
         self.loader = loader
         self.model = model
         self.optimizer = config["optimizer"]
         self.loss_fn = config["loss_fn"]
         self.device = config["device"]
-        self.precision_strategy = config["precision_strategy"]
 
         # Send to device
         self.model = self.model.to(device=self.device)
         self.psnr_metric = metrics.psnr_metric.to(device=self.device)
         self.mae_metric = metrics.mae_metric.to(device=self.device)
         self.loss_fn = self.loss_fn.to(device=self.device)
-
-    @staticmethod
-    def _validate_config(config: TrainingConfig):
-        """Validates the provided training configuration."""
-        if not isinstance(
-            config["precision_strategy"],
-            (MixedPrecisionStrategy, StandardPrecisionStrategy),
-        ):
-            raise TypeError(
-                f"Invalid strategy type. "
-                f"Expected MixedPrecisionStrategy or StandardPrecisionStrategy, "
-                f"but got {type(config['precision_strategy']).__name__}."
-            )
 
     def run(self, tracker: NetworkTracker) -> RunnerReturnItems:
         num_batches = len(self.loader)
@@ -131,11 +59,13 @@ class Runner:
             inputs = data["coords"].squeeze()
             targets = data["derivatives"].squeeze()
 
-            predictions = self.precision_strategy.forward_batch(self.model, inputs)
+            predictions = self.model(inputs)
             loss, derivatives = self.loss_fn(predictions, targets, inputs)
 
             self.optimizer.zero_grad()
-            self.precision_strategy.backward_batch(loss, self.optimizer)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
 
             self.psnr_metric.forward(targets, derivatives)
             self.mae_metric.forward(targets, derivatives)

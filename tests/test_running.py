@@ -1,5 +1,3 @@
-# ruff: noqa: E501
-
 import unittest
 from unittest.mock import MagicMock
 
@@ -10,7 +8,6 @@ from torch.utils.data import DataLoader
 from src.losses import FitGradients
 from src.running import (
     Runner,
-    StandardPrecisionStrategy,
     TrainingConfig,
     TrainingMetrics,
     run_epoch,
@@ -42,7 +39,6 @@ class TestRunner(unittest.TestCase):
         config = TrainingConfig(
             optimizer=self.optimizer,
             device=torch.device("cpu"),
-            precision_strategy=StandardPrecisionStrategy(),  # Choose any strategy
             loss_fn=FitGradients(AutogradDerivativesStrategy()),
         )
 
@@ -77,12 +73,11 @@ class TestRunner(unittest.TestCase):
         # Restore the initial model state
         self.runner.model.load_state_dict(initial_state_dict)
 
-        # Check if the batch data tracking functions are called correctly
-        # Instead of using assert_any_call, manually extract the call args
+        # Check if "coordinates" data was tracked correctly
         call_found = False
         for call in self.mock_tracker.add_batch_data.call_args_list:
-            if call[0][0] == "coordinates" and torch.allclose(
-                call[0][1], self.mock_data["coords"], atol=1e-6
+            if call[0][0] == "coordinates" and torch.equal(
+                call[0][1], self.mock_data["coords"]
             ):
                 call_found = True
                 break
@@ -92,26 +87,20 @@ class TestRunner(unittest.TestCase):
             "add_batch_data was not called with 'coordinates' and matching data.",
         )
 
-        # Now compare predictions as before
-        predictions_tensor = self.runner.precision_strategy.forward_batch(
-            self.runner.model, self.mock_data["coords"]
-        )
+        # Check if predictions were tracked correctly
+        predictions_tensor = self.runner.model(self.mock_data["coords"])
 
-        # Extract the "predictions" call arguments
         call_found = False
         for call in self.mock_tracker.add_batch_data.call_args_list:
-            if call[0][0] == "predictions":
-                tracked_predictions = call[0][1]  # Second argument (tensor)
+            if call[0][0] == "predictions" and torch.allclose(
+                call[0][1], predictions_tensor, atol=1e-2
+            ):
                 call_found = True
                 break
-        else:
-            self.fail("add_batch_data was not called with 'predictions'.")
 
-        # Compare the predicted tensors explicitly
         self.assertTrue(
-            torch.allclose(tracked_predictions, predictions_tensor, atol=1e-2),
-            f"Expected predictions tensor: {predictions_tensor}, "
-            f"but got: {tracked_predictions}",
+            call_found,
+            "add_batch_data was not called with 'predictions' and matching data.",
         )
 
     def test_loss_computation(self):
@@ -147,17 +136,6 @@ class TestRunner(unittest.TestCase):
         self.assertEqual(
             results["epoch_mae"].dtype, torch.float, "MAE should have dtype torch.float"
         )
-
-    def test_invalid_strategy(self):
-        # Try to initialize with an invalid strategy
-        invalid_config = TrainingConfig(
-            fit_option="gradients",
-            optimizer=self.optimizer,
-            device=torch.device("cpu"),
-            precision_strategy=None,  # Invalid strategy
-        )
-        with self.assertRaises(TypeError):
-            Runner(self.mock_loader, self.model, invalid_config, TrainingMetrics())
 
 
 if __name__ == "__main__":

@@ -11,9 +11,7 @@ from src.losses import FiniteDifferenceConfig, FitGradients, FitLaplacian
 from src.model import SIREN
 from src.read_data import read_data_from_matfile
 from src.running import (
-    MixedPrecisionStrategy,
     Runner,
-    StandardPrecisionStrategy,
     TrainingConfig,
     TrainingMetrics,
     run_epoch,
@@ -78,13 +76,6 @@ def main():
         optimizer, patience=1000, factor=0.5, min_lr=1e-7
     )
 
-    if args.use_autocast:
-        precision_strategy = MixedPrecisionStrategy()
-        print("Using mixed precision")
-    else:
-        precision_strategy = StandardPrecisionStrategy()
-        print("Using standard precision")
-
     if args.use_autograd:
         derivatives_strategy = AutogradDerivativesStrategy()
         finite_diff_config = None
@@ -109,7 +100,6 @@ def main():
     config = {
         "device": device,
         "optimizer": optimizer,
-        "precision_strategy": precision_strategy,
         "loss_fn": loss_fn,
     }
 

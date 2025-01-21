@@ -33,7 +33,6 @@ class MyProgramArgs:
     num_epochs: int
     batch_size: int
     num_workers: int
-    use_autocast: bool
     use_autograd: bool
 
     # checkpoint parameters
@@ -141,12 +140,6 @@ parser.add_argument(
 )
 parser.add_argument(
     "--num_workers", type=int, default=0, help="Number of workers. default=0"
-)
-parser.add_argument(
-    "--use_autocast",
-    type=bool,
-    default=False,
-    help="Use mixed precision training. default=False",
 )
 parser.add_argument(
     "--use_autograd",
