@@ -7,6 +7,7 @@ import torch
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 
+from src.losses import FitGradients
 from src.running import (
     Runner,
     StandardPrecisionStrategy,
@@ -15,6 +16,7 @@ from src.running import (
     run_epoch,
 )
 from src.tracking import NetworkTracker
+from src.vector_ops import AutogradDerivativesStrategy
 
 
 class TestRunner(unittest.TestCase):
@@ -38,10 +40,10 @@ class TestRunner(unittest.TestCase):
 
         # Mock training configuration
         config = TrainingConfig(
-            fit_option="gradients",
             optimizer=self.optimizer,
             device=torch.device("cpu"),
             precision_strategy=StandardPrecisionStrategy(),  # Choose any strategy
+            loss_fn=FitGradients(AutogradDerivativesStrategy()),
         )
 
         # Metrics setup

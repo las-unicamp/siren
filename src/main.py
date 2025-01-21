@@ -7,6 +7,7 @@ from src.checkpoint import load_checkpoint, save_checkpoint
 from src.datasets import DerivativesDataset, DerivativesDatasetBatches
 from src.early_stopping import EarlyStopping
 from src.hyperparameters import args
+from src.losses import FiniteDifferenceConfig, FitGradients, FitLaplacian
 from src.model import SIREN
 from src.read_data import read_data_from_matfile
 from src.running import (
@@ -19,6 +20,10 @@ from src.running import (
 )
 from src.tensorboard_tracker import TensorboardTracker
 from src.timeit_decorator import timeit_decorator
+from src.vector_ops import (
+    AutogradDerivativesStrategy,
+    FiniteDifferenceDerivativesStrategy,
+)
 
 
 def enforce_reproducibility():
@@ -75,15 +80,37 @@ def main():
 
     if args.use_autocast:
         precision_strategy = MixedPrecisionStrategy()
+        print("Using mixed precision")
     else:
         precision_strategy = StandardPrecisionStrategy()
+        print("Using standard precision")
+
+    if args.use_autograd:
+        derivatives_strategy = AutogradDerivativesStrategy()
+        finite_diff_config = None
+        print("Using autograd")
+    else:
+        derivatives_strategy = FiniteDifferenceDerivativesStrategy()
+        finite_diff_config = FiniteDifferenceConfig(model=model, delta=1e-5)
+        print("Using finite difference")
+
+    if args.fit == "gradients":
+        loss_fn = FitGradients(
+            derivatives_strategy, finite_diff_config=finite_diff_config
+        )
+    elif args.fit == "laplacian":
+        loss_fn = FitLaplacian(
+            derivatives_strategy, finite_diff_config=finite_diff_config
+        )
+    else:
+        raise ValueError("Fit option must be either `gradients` or `laplacian`")
 
     config: TrainingConfig
     config = {
         "device": device,
-        "fit_option": args.fit,
         "optimizer": optimizer,
         "precision_strategy": precision_strategy,
+        "loss_fn": loss_fn,
     }
 
     runner = Runner(dataloader, model, config, TrainingMetrics())

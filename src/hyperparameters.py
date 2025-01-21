@@ -34,6 +34,7 @@ class MyProgramArgs:
     batch_size: int
     num_workers: int
     use_autocast: bool
+    use_autograd: bool
 
     # checkpoint parameters
     epochs_until_checkpoint: int
@@ -146,6 +147,13 @@ parser.add_argument(
     type=bool,
     default=False,
     help="Use mixed precision training. default=False",
+)
+parser.add_argument(
+    "--use_autograd",
+    type=bool,
+    default=False,
+    help="Use Pytorch autograd. If False, derivatives will be evaluated through"
+    "finite differences. default=False",
 )
 
 

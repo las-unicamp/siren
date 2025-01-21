@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol, Tuple, TypedDict
+from typing import Any, Protocol, Tuple, TypedDict
 
 import torch
 from torch.utils.data.dataloader import DataLoader
@@ -8,7 +8,6 @@ from torchmetrics.image import PeakSignalNoiseRatio
 
 from src.datasets import DatasetReturnItems
 from src.dtos import RunnerReturnItems
-from src.losses import FitGradients, FitLaplacian
 from src.metrics import RelativeResidualError
 from src.my_types import TensorFloatN, TensorFloatNx2, TensorFloatNx3
 from src.tracking import NetworkTracker
@@ -69,10 +68,10 @@ class StandardPrecisionStrategy:
 
 
 class TrainingConfig(TypedDict):
-    fit_option: Literal["gradients, laplacian"]
     optimizer: torch.optim.Optimizer
     device: torch.device
     precision_strategy: TrainingPrecisionStrategy
+    loss_fn: torch.nn.Module
 
 
 @dataclass
@@ -96,8 +95,7 @@ class Runner:
         self.loader = loader
         self.model = model
         self.optimizer = config["optimizer"]
-        is_laplacian = config["fit_option"] == "laplacian"
-        self.loss_fn = FitLaplacian() if is_laplacian else FitGradients()
+        self.loss_fn = config["loss_fn"]
         self.device = config["device"]
         self.precision_strategy = config["precision_strategy"]
 
