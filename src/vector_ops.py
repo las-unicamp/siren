@@ -121,19 +121,48 @@ class FiniteDifferenceDerivativesStrategy:
         model: torch.nn.Module,
         delta: float,
     ) -> TensorFloatNx2 | TensorFloatNx3:
-        num_dimensions = coords.shape[1]  # 2 for 2D, 3 for 3D
-        grads = []
+        """
+        Compute the gradient using finite differences in a batched manner.
 
+        Parameters
+        ----------
+        target : TensorFloatN
+            Tensor of shape `(n_coords, ?)` representing the targets.
+        coords : TensorFloatNx2 | TensorFloatNx3
+            Tensor of shape `(n_coords, 2)` or `(n_coords, 3)` representing the
+            coordinates.
+        model : torch.nn.Module
+            Model to evaluate the perturbed coordinates.
+        delta : float
+            Finite difference step size.
+
+        Returns
+        -------
+        TensorFloatNx2 | TensorFloatNx3
+            Gradient of shape `(n_coords, 2)` or `(n_coords, 3)`.
+        """
+        num_dimensions = coords.shape[1]
+        n_coords = coords.shape[0]
+
+        # Create perturbed coordinates for all dimensions in a batched manner
+        perturbed_coords = coords.unsqueeze(1).repeat(1, num_dimensions, 1)
         for dim in range(num_dimensions):
-            perturbed_coords = coords.clone()
-            perturbed_coords[:, dim] += delta
+            perturbed_coords[:, dim, dim] += delta
 
-            perturbed_output = model(perturbed_coords)
+        # Flatten for a single model call
+        flat_perturbed_coords = perturbed_coords.view(-1, num_dimensions)
 
-            finite_diff = (perturbed_output - target) / delta
-            grads.append(finite_diff)
+        # Perform a single batched model call
+        flat_perturbed_outputs = model(flat_perturbed_coords)
 
-        return torch.cat(grads, dim=-1)
+        # Reshape the outputs to match the number of dimensions
+        perturbed_outputs = flat_perturbed_outputs.view(n_coords, num_dimensions, -1)
+
+        # Compute finite differences
+        finite_differences = (perturbed_outputs - target.unsqueeze(1)) / delta
+
+        # Concatenate the gradients for all dimensions
+        return finite_differences.squeeze(-1)
 
     def compute_laplacian(
         self,
@@ -142,20 +171,54 @@ class FiniteDifferenceDerivativesStrategy:
         model: torch.nn.Module,
         delta: float,
     ) -> TensorFloatNx1:
+        """
+        Compute the Laplacian using second-order finite differences in a batched manner.
+
+        Parameters
+        ----------
+        target : TensorFloatNx1
+            Tensor of shape `(n_coords, 1)` representing the target values.
+        coords : TensorFloatNx2 | TensorFloatNx3
+            Tensor of shape `(n_coords, 2)` or `(n_coords, 3)` representing the
+            coordinates.
+        model : torch.nn.Module
+            Model to evaluate the perturbed coordinates.
+        delta : float
+            Finite difference step size.
+
+        Returns
+        -------
+        TensorFloatNx1
+            Tensor of shape `(n_coords, 1)` containing the Laplacian values.
+        """
         num_dimensions = coords.shape[1]
-        laplacian = torch.zeros_like(target)
+        n_coords = coords.shape[0]
 
+        # Create forward and backward perturbed coordinates for all dimensions
+        perturbed_coords = coords.unsqueeze(1).repeat(1, num_dimensions * 2, 1)
+
+        # Adjust coordinates for forward and backward perturbations
         for dim in range(num_dimensions):
-            # Compute second-order finite difference for Laplacian
-            perturbed_coords_plus = coords.clone()
-            perturbed_coords_plus[:, dim] += delta
+            perturbed_coords[:, 2 * dim, dim] += delta  # Forward perturbation
+            perturbed_coords[:, 2 * dim + 1, dim] -= delta  # Backward perturbation
 
-            perturbed_coords_minus = coords.clone()
-            perturbed_coords_minus[:, dim] -= delta
+        # Flatten for a single model call
+        flat_perturbed_coords = perturbed_coords.view(-1, num_dimensions)
 
-            output_plus = model(perturbed_coords_plus)
-            output_minus = model(perturbed_coords_minus)
+        # Perform a single batched model call
+        flat_perturbed_outputs = model(flat_perturbed_coords)
 
-            laplacian += (output_plus - 2 * target + output_minus) / (delta**2)
+        # Reshape the outputs to separate forward and backward perturbations
+        perturbed_outputs = flat_perturbed_outputs.view(n_coords, num_dimensions, 2, -1)
+
+        # Compute second-order finite differences for each dimension
+        forward_outputs = perturbed_outputs[:, :, 0, :]
+        backward_outputs = perturbed_outputs[:, :, 1, :]
+        second_order_diffs = (
+            forward_outputs - 2 * target.unsqueeze(1) + backward_outputs
+        ) / (delta**2)
+
+        # Sum over dimensions to get the Laplacian
+        laplacian = second_order_diffs.sum(dim=1)
 
         return laplacian
