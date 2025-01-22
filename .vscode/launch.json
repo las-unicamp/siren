@@ -41,6 +41,41 @@
             "purpose": [
                 "debug-in-terminal"
             ]
+        },
+        {
+            "name": "Debug Pytest: Current Test File",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}" // Adjust if your PYTHONPATH is different
+            },
+            "args": [
+                "-s",
+                "${file}" // Runs the currently open test file
+            ],
+            "purpose": [
+                "debug-in-terminal"
+            ]
+        },
+        {
+            "name": "Debug Pytest: Specific Test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}" // Adjust if your PYTHONPATH is different
+            },
+            "args": [
+                "tests/test_integration.py::test_tgv_laplacian_integration_finite_diff" // Replace with specific test path
+            ],
+            "purpose": [
+                "debug-in-terminal"
+            ]
         }
     ]
 }
