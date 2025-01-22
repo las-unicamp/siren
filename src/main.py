@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from src.checkpoint import load_checkpoint, save_checkpoint
 from src.datasets import DerivativesDataset, DerivativesDatasetBatches
+from src.dtos import DatasetReturnItems
 from src.early_stopping import EarlyStopping
 from src.hyperparameters import args
 from src.losses import FiniteDifferenceConfig, FitGradients, FitLaplacian
@@ -53,6 +54,25 @@ def main():
         print("Running with single batch")
         dataset = DerivativesDataset(training_data=training_data, device=device)
 
+    def custom_collate_fn(batch):
+        """
+        Custom collate function to remove the leading batch dimension (which is
+        always 1) when batch size is 1 (whole data).
+        """
+        data: DatasetReturnItems
+        data = batch[0]  # Get the first (and only) item in the batch
+
+        # Now, remove the leading dimension (which is always 1)
+        data["coords"] = data["coords"].squeeze(0)
+        data["derivatives"] = data["derivatives"].squeeze(0)
+
+        return data
+
+    if args.batch_size == 1:
+        collate_fn = custom_collate_fn
+    else:
+        collate_fn = torch.utils.data.dataloader.default_collate
+
     dataloader = DataLoader(
         dataset,
         batch_size=args.batch_size,
@@ -60,6 +80,7 @@ def main():
         num_workers=args.num_workers,
         pin_memory=False,
         drop_last=False,
+        collate_fn=collate_fn,
     )
 
     model = SIREN(

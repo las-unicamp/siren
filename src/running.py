@@ -56,8 +56,8 @@ class Runner:
         for batch_index, data in enumerate(self.loader):
             data: DatasetReturnItems
 
-            inputs = data["coords"].squeeze()
-            targets = data["derivatives"].squeeze()
+            inputs = data["coords"]
+            targets = data["derivatives"]
 
             predictions = self.model(inputs)
             loss, derivatives = self.loss_fn(predictions, targets, inputs)
