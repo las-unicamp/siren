@@ -9,7 +9,6 @@ from src.my_types import (
     ArrayFloat32Nx2,
     ArrayFloat32Nx3,
     ArrayFloat32NxN,
-    TensorFloatN,
     TensorFloatNx1,
     TensorFloatNx2,
     TensorFloatNx3,
@@ -18,7 +17,7 @@ from src.my_types import (
 
 
 class DatasetReturnItems(TypedDict):
-    coords: TensorFloatN
+    coords: TensorFloatNx2
     derivatives: TensorFloatNx1 | TensorFloatNx2 | TensorFloatNx3
 
 

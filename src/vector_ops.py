@@ -2,20 +2,20 @@ from typing import Protocol, overload
 
 import torch
 
-from src.my_types import TensorFloatN, TensorFloatNx1, TensorFloatNx2, TensorFloatNx3
+from src.my_types import TensorFloatNx1, TensorFloatNx2, TensorFloatNx3
 
 
 class DerivativesStrategy(Protocol):
     @overload
     def compute_gradient(
-        self, target: TensorFloatN, coords: TensorFloatNx2 | TensorFloatNx3
+        self, target: TensorFloatNx1, coords: TensorFloatNx2 | TensorFloatNx3
     ) -> TensorFloatNx2 | TensorFloatNx3:
         """Implements the gradient computation using Pytorch autograd"""
 
     @overload
     def compute_gradient(
         self,
-        target: TensorFloatN,
+        target: TensorFloatNx1,
         coords: TensorFloatNx2 | TensorFloatNx3,
         model: torch.nn.Module,
         delta: float,
@@ -47,7 +47,7 @@ class DerivativesStrategy(Protocol):
 
 class AutogradDerivativesStrategy:
     def compute_gradient(
-        self, target: TensorFloatN, coords: TensorFloatNx2 | TensorFloatNx3
+        self, target: TensorFloatNx1, coords: TensorFloatNx2 | TensorFloatNx3
     ) -> TensorFloatNx2 | TensorFloatNx3:
         """Compute the gradient of target with respect to input coords.
 
@@ -129,7 +129,7 @@ class AutogradDerivativesStrategy:
 class FiniteDifferenceDerivativesStrategy:
     def compute_gradient(
         self,
-        target: TensorFloatN,
+        target: TensorFloatNx1,
         coords: TensorFloatNx2 | TensorFloatNx3,
         model: torch.nn.Module,
         delta: float,
