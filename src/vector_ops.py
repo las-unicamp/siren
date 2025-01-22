@@ -91,39 +91,26 @@ class AutogradDerivativesStrategy:
             tensor of shape `(n_coords, 1)` representing the Laplacian.
         """
 
-        def divergence(
-            grad: TensorFloatNx2 | TensorFloatNx3,
-            coords: TensorFloatNx2 | TensorFloatNx3,
-        ) -> TensorFloatNx1:
-            """Compute divergence.
+        # Compute the gradient of the target with respect to coords
+        gradients = self.compute_gradient(target, coords)  # Shape: (n_coords, num_dims)
 
-            Parameters
-            ----------
-            grad : torch.Tensor
-                tensor of shape `(n_coords, 2)` representing the gradient wrt
-                x and y, or `(n_coords, 3)`, for x, y and z-directions.
+        laplacian = torch.zeros_like(target)
 
-            coords : torch.Tensor
-                tensor of shape `(n_coords, 2)` or `(n_coords, 3)` representing
-                the coordinates.
+        # Loop over each dimension to compute the second derivatives
+        for dim in range(coords.shape[1]):
+            grad_dim = gradients[:, dim]  # Extract gradient for the current dimension
 
-            Returns
-            -------
-            div : torch.Tensor
-                tensor of shape `(n_coords, 1)` representing the divergence.
+            # Compute second derivative for the current dimension
+            grad2_dim = torch.autograd.grad(
+                grad_dim,
+                coords,
+                grad_outputs=torch.ones_like(grad_dim),
+                create_graph=True,
+            )[0][:, dim]  # Extract the derivative for the same dimension
 
-            Notes
-            -----
-            In a 2D case this will give us f_{xx} + f_{yy}.
-            """
-            div = 0.0
-            num_dimensions = coords.shape[1]
-            for i in range(num_dimensions):
-                div += self.compute_gradient(grad[..., i], coords)[..., i : i + 1]
-            return div
+            laplacian += grad2_dim.unsqueeze(-1)  # Accumulate into the Laplacian
 
-        grad = self.compute_gradient(target, coords)
-        return divergence(grad, coords)
+        return laplacian
 
 
 class FiniteDifferenceDerivativesStrategy:
