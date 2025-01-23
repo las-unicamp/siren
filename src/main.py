@@ -97,14 +97,14 @@ def main():
         optimizer, patience=1000, factor=0.5, min_lr=1e-7
     )
 
-    if args.use_autograd:
+    if args.delta:
+        print("Using finite difference")
+        derivatives_strategy = FiniteDifferenceDerivativesStrategy()
+        finite_diff_config = FiniteDifferenceConfig(model=model, delta=args.delta)
+    else:
+        print("Using autograd")
         derivatives_strategy = AutogradDerivativesStrategy()
         finite_diff_config = None
-        print("Using autograd")
-    else:
-        derivatives_strategy = FiniteDifferenceDerivativesStrategy()
-        finite_diff_config = FiniteDifferenceConfig(model=model, delta=1e-5)
-        print("Using finite difference")
 
     if args.fit == "gradients":
         loss_fn = FitGradients(

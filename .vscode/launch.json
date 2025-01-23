@@ -32,7 +32,7 @@
                 "--learning_rate=3e-5",
                 "--num_epochs=2000",
                 "--batch_size=1",
-                "--use_autograd=True", // uncomment to set to True
+                // "--delta=1e-3", // comment out to use autograd
                 //
                 // checkpoint parameters
                 "--epochs_until_checkpoint=200",

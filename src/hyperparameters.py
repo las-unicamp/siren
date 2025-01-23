@@ -33,7 +33,7 @@ class MyProgramArgs:
     num_epochs: int
     batch_size: int
     num_workers: int
-    use_autograd: bool
+    delta: float
 
     # checkpoint parameters
     epochs_until_checkpoint: int
@@ -142,11 +142,12 @@ parser.add_argument(
     "--num_workers", type=int, default=0, help="Number of workers. default=0"
 )
 parser.add_argument(
-    "--use_autograd",
-    type=bool,
-    default=False,
-    help="Use Pytorch autograd. If False, derivatives will be evaluated through"
-    "finite differences. default=False",
+    "--delta",
+    type=float,
+    default=None,
+    help="Delta to compute the derivatives using finite differences. When falsy (None),"
+    "derivatives will be evaluated through automatic differentiation (analytical)."
+    "default=None",
 )
 
 
