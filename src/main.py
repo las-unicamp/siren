@@ -163,7 +163,7 @@ def main():
 
         early_stopping(epoch_loss)
         if early_stopping.stop:
-            print("Ealy stopping")
+            print("Early stopping")
             break
 
         if tracker.should_save_intermediary_data():

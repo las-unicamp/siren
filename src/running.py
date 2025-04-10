@@ -63,7 +63,6 @@ class Runner:
             loss, derivatives = self.loss_fn(predictions, targets, inputs)
 
             self.optimizer.zero_grad()
-            self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
 
