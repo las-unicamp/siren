@@ -10,13 +10,9 @@ class MyProgramArgs:
     All possible arguments must be declared in this dataclass.
     """
 
-    config_filepath: any
-
     # logger parameters
     logging_root: str
     experiment_name: str
-    epochs_until_summary: int
-    save_intermediary_outputs: int
 
     # input parameters
     fit: str
@@ -41,15 +37,16 @@ class MyProgramArgs:
     checkpoint_file_name_on_save: str
 
 
-parser = configargparse.ArgumentParser()
+parser = configargparse.ArgumentParser(
+    description="Hyperparameters and configurations to train the SIREN model",
+    default_config_files=["params.yaml"],
+)
 
-
-parser.add(
+parser.add_argument(
     "-c",
-    "--config_filepath",
-    required=False,
+    "--config",
     is_config_file=True,
-    help="Path to config file.",
+    help="Path to configuration file in YAML format",
 )
 
 
@@ -63,18 +60,6 @@ parser.add_argument(
     required=True,
     help="Name of subdirectory in logging_root where summaries and checkpoints"
     "will be saved.",
-)
-parser.add_argument(
-    "--epochs_until_summary",
-    type=int,
-    default=200,
-    help="Number of epochs until tensorboard summary is saved. default=1,000",
-)
-parser.add_argument(
-    "--save_intermediary_outputs",
-    type=bool,
-    default=True,
-    help="If intermediary results should be saved. default=True",
 )
 
 
@@ -173,4 +158,7 @@ parser.add_argument(
 )
 
 
-args = MyProgramArgs(**vars(parser.parse_args()))
+raw_args = vars(parser.parse_args())
+raw_args.pop("config", None)
+
+args = MyProgramArgs(**raw_args)

@@ -1,0 +1,25 @@
+# logger parameters
+experiment_name: "my_experiment_name"
+logging_root: "logs/"
+
+# input parameters
+fit: "gradients"   # gradients or laplacian
+input_filename: "input.mat"
+
+# network architecture parameters
+num_hidden_layers: 2
+num_nodes_per_layer: 64
+first_layer_omega: 20
+hidden_layer_omega: 30
+
+# training parameters
+learning_rate: 3e-5
+num_epochs: 2000
+batch_size: 1
+# delta: 1e-7   # when commented out, or None, it will use automatic diff
+
+# checkpoint parameters
+epochs_until_checkpoint: 200
+checkpoint_file_name_on_save: "my_checkpoint.pth.tar"
+# load_checkpoint: "restart.tar"
+
