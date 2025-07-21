@@ -13,7 +13,7 @@ The image above illustrates an example of the reconstructed pressure field from 
 
 ### **Citing**
 When using this code, please cite the following reference:
-- Renato Miotto, Fernando Zigunov, William Wolf: _Pressure Field Reconstruction with SIREN: A Mesh-Free Approach for Image Velocimetry in Complex Noisy Environments_
+[Miotto, R.F., Wolf, W.R. and Zigunov, F. _Pressure field reconstruction with SIREN_. Exp Fluids 66, 151 (2025).](https://doi.org/10.1007/s00348-025-04074-1)
 
 ### **Installation**
 
@@ -29,31 +29,91 @@ To install and run this code locally, follow these instructions:
 1. Clone the repository:
 ```bash
 git clone https://github.com/las-unicamp/siren.git
+cd siren
 ```
-2. Install required dependencies and run script:
+2. Install dependencies using UV:
 ```bash
-uv run src/main.py
+uv sync
 ```
 
 ### **Usage**
 
-The code expects a MATLAB (.mat) file containing the coordinates (either physical or pixel coordinates) where measurements were taken and the derivatives at these locations. 
-This MATLAB file must have the following column headers and data shape:
+### **Running the Script**
+
+The script requires several parameters, which can be passed through the command line or a configuration file.
+
+#### **VSCode Users**
+If you're using VSCode, you can configure the `.vscode/launch.json` file to streamline script execution.
+
+#### **Command Line Execution**
+Run the script with the required parameters:
+```bash
+python main.py --logging_root "log" \
+               --experiment_name "my_experiment" \
+               --fit "gradients" \
+               --input_filename "input.mat" \
+               --num_hidden_layers 1 \
+               --num_nodes_per_layer 64 \
+               --first_layer_omega 10 \
+               --hidden_layer_omega 30 \
+               --learning_rate 1e-4 \
+               --num_epochs 2000 \
+               --batch_size None \
+               --num_workers 0 \
+               --delta None \
+               --epochs_until_checkpoint 1000 \
+               --load_checkpoint None \
+               --checkpoint_file_name_on_save "my_checkpoint.pth.tar"
+```
+
+Alternatively, use a configuration file (running the command from the root directory):
+```bash
+PYTHONPATH=${PWD} uv run python src/main.py -c config.yaml
+```
+
+### **Required Parameters**
+
+| Parameter                 | Type    | Description                                                                  |
+| --------------------------| ------- | ---------------------------------------------------------------------------- |
+| `experiment_name`         | `str`   | Name of the subdirectory where summaries and checkpoints will be saved.      |
+| `fit`                     | `str`   | Whether training will fit the `gradients` or the `laplacian`.                |
+| `input_filename`          | `str`   | Name of the .mat file containing the input data.                             |
+| `num_hidden_layers`       | `int`   | Number of hidden layers.                                                     |
+| `num_nodes_per_layer`     | `int`   | Number of nodes per layer.                                                   |
+| `first_layer_omega`       | `float` | Frequency scaling of the first layer.                                        |
+| `hidden_layer_omega`      | `float` | Frequency scaling of the hidden layers.                                      |
+| `learning_rate`           | `float` | Learning rate.                                                               |
+| `num_epochs`              | `int`   | Number of epochs to train for.                                               |
+| `epochs_until_checkpoint` | `int`   | Number of epochs until checkpoint is saved.                                  |
+
+The code also supports finite difference computation of the derivatives. This feature comes in hand when the GPU memory is
+insufficient. To use it, you must specify a parameter `delta` which is a small coordinate perturbation to compute the derivative.
+
+A full list of available parameters to be passed during Python execution can be found in `src/hyperparameters.py`.
+
+### **File Requirements**
+
+The current implementation supports MATLAB file formats (`.mat`). This file is passed to the `input_filename` parameter,
+which must have the following column headers and data shape:
 
 - "coordinates": ArrayFloat32Nx2 | ArrayFloat32Nx3
 - "gradient_x": ArrayFloat32NxN
 - "gradient_y": ArrayFloat32NxN
 - "gradient_z": ArrayFloat32NxN (optional)
+- "laplacian": ArrayFloat32NxN (optional)
 - "mask": ArrayBoolNxN
 
-Here, N is the number of points.
+Here, N is the number of point measurements (valid pixels in PIV or particles in PTV).
 
-A few parameters must be passed during Python execution. The available parameters can be found in `hyperparameters.py`.
-The Visual Studio IDE is already configured to handle passing the parameters in a convenient way (see `.vscode/launch.json`).
+The coordinates represent the locations where each measurement of the derivative (either the gradients or the Laplacian) 
+of the velocity field was taken.
 
 After passing the proper arguments and executing the main script, the training will begin.
-A Checkpoint will be saved in the root directory, which can be used to run inferences or regenerate the result.
+A checkpoint will be saved in the root directory, which can be used to run inferences or regenerate the result.
 In addition, the code is configured to write log files and intermediary predictions inside `logs/experiment_name` folder.
+
+> **NOTE:** The current implementation supports MATLAB file formats with the mentioned headers. 
+However, the user can implement their own readers to accept files with different data structure.
 
 ### **License**
 
