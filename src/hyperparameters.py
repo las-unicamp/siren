@@ -113,8 +113,8 @@ parser.add_argument(
 parser.add_argument(
     "--num_epochs",
     type=int,
-    default=10_000,
-    help="Number of epochs to train for. default=10,000",
+    default=2_000,
+    help="Number of epochs to train for. default=2,000",
 )
 parser.add_argument(
     "--batch_size",
