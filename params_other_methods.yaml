@@ -1,0 +1,4 @@
+experiment_name: subdomain100
+input_filename: runs/robustness_100_cases/inputs/subdomain100.mat
+output_filename: osmodi_subdomain100.mat
+mesh: structured  # structured unstructured
